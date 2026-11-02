@@ -1,0 +1,76 @@
+# ==========================================
+# CYBERGUARD Git Ignore Specification
+# ==========================================
+
+# --- Python & Virtual Environments ---
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# --- Testing & Quality Tools ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# --- Node.js & Vite Frontend ---
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.vite/
+frontend/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Environment Variables & Secrets ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+*.crt
+
+# Keep environment example template tracked in Git
+!.env.example
+
+# --- Local Databases & Storage ---
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# --- Logs & Ephemeral Files ---
+*.log
+logs/
+scratch/
+tmp/
+temp/
+
+# --- IDE & Operating System ---
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Documentation
+docs/

@@ -1,0 +1,99 @@
+{
+  "phishing_scenarios": [
+    {
+      "id": "sample_phish_01",
+      "title": "Lookalike Brand & Urgent Credential Theft",
+      "text": "CRITICAL ALERT: Your Microsoft 365 enterprise account will be suspended within 24 hours due to unverified sign-in attempts. Click immediately to restore access and verify your password.",
+      "url": "https://micros0ft-security-verification.xyz/login",
+      "sender": "no-reply@security-micros0ft.xyz",
+      "expected_category": "Lookalike Domain Spear-Phishing",
+      "expected_severity": "Critical"
+    },
+    {
+      "id": "sample_phish_02",
+      "title": "IP-Hosted Payment Form Phish",
+      "text": "Your recent invoice #INV-92144 is overdue. Please remit payment via our encrypted portal linked below to prevent legal debt recovery.",
+      "url": "http://185.220.101.5/billing/pay.html",
+      "sender": "accounts-receivable@fast-invoicing.click",
+      "expected_category": "Malicious URL",
+      "expected_severity": "Critical"
+    },
+    {
+      "id": "sample_phish_benign",
+      "title": "Benign Corporate IT Announcement",
+      "text": "Team, please note that quarterly maintenance will take place this Saturday from 2:00 AM to 4:00 AM EST. Access to internal wiki will be temporarily read-only.",
+      "url": "https://wiki.internal.corp/maintenance-schedule",
+      "sender": "it-ops@internal.corp",
+      "expected_category": "Benign Communication",
+      "expected_severity": "Safe"
+    }
+  ],
+  "impersonation_scenarios": [
+    {
+      "id": "sample_imper_01",
+      "title": "CEO Urgent Wire Transfer (BEC)",
+      "sender_name": "Satya Nadella (CEO)",
+      "sender_address": "satya.nadella.corp@gmail.com",
+      "content": "Are you at your desk? I need an urgent and confidential wire transfer processed today for our vendor acquisition before market close. Wire instructions are attached.",
+      "expected_category": "Executive Impersonation (BEC)",
+      "expected_severity": "Critical"
+    },
+    {
+      "id": "sample_imper_02",
+      "title": "Synthetic Audio Deepfake Verification",
+      "sender_name": "VP Finance Marcus Vance",
+      "sender_address": "marcus.vance@internal.corp",
+      "content": "I am sending you an audio voice memo authorizing the transfer request since I am boarding a flight.",
+      "media_url": "https://storage.cyberguard.internal/samples/synthetic_voice_clone_artifact.wav",
+      "expected_category": "Synthetic Deepfake Media",
+      "expected_severity": "Critical"
+    },
+    {
+      "id": "sample_imper_benign",
+      "title": "Legitimate Executive Announcement",
+      "sender_name": "Dana White (Operations Lead)",
+      "sender_address": "dana.white@internal.corp",
+      "content": "Good morning team, please find attached the revised Q3 sprint goals discussed during yesterday's all-hands meeting.",
+      "expected_category": "Legitimate Identity",
+      "expected_severity": "Safe"
+    }
+  ],
+  "anomaly_scenarios": [
+    {
+      "id": "sample_anom_01",
+      "title": "Impossible Travel Velocity Anomaly",
+      "user_id": "usr_94821",
+      "ip_address": "103.251.167.22",
+      "device_id": "dev_unknown_linux_curl",
+      "location": "London, UK",
+      "failed_attempts": 0,
+      "session_duration": 45,
+      "expected_category": "Impossible Travel Anomaly",
+      "expected_severity": "Critical"
+    },
+    {
+      "id": "sample_anom_02",
+      "title": "Credential Stuffing / Brute-Force Spray",
+      "user_id": "usr_admin",
+      "ip_address": "194.26.29.112",
+      "device_id": "dev_kali_hydra_v8",
+      "location": "Frankfurt, Germany",
+      "failed_attempts": 8,
+      "session_duration": 10,
+      "expected_category": "Credential Stuffing / Brute-Force",
+      "expected_severity": "High"
+    },
+    {
+      "id": "sample_anom_benign",
+      "title": "Routine Baseline Employee Authentication",
+      "user_id": "usr_94821",
+      "ip_address": "72.229.28.185",
+      "device_id": "dev_macbook_pro_04",
+      "location": "New York, USA",
+      "failed_attempts": 0,
+      "session_duration": 3600,
+      "expected_category": "Normal Authentication",
+      "expected_severity": "Safe"
+    }
+  ]
+}
