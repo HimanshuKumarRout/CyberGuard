@@ -146,3 +146,130 @@ async def test_end_to_end_pipeline():
     assert event.explanation.summary != ""
     assert len(event.recommended_actions) >= 1
     assert event.incident_status == "Open"
+
+
+# =========================================================================
+# Phase 7 Gap Closure Test Suite (TASK-22 through TASK-29)
+# =========================================================================
+
+def test_quishing_detector():
+    """TASK-22: Validates QR-Code quishing analysis and lookalike domain extraction."""
+    # Test quishing analysis with decoded URL
+    result = phishing_detector.analyze_quishing(
+        image_bytes=b"dummy_qr_code_image_bytes",
+        filename="payroll_qr.png",
+        extracted_url="https://paypa1-update.xyz/verify-login"
+    )
+    assert result["confidence"] >= 0.85
+    assert result["threat_category"] == "QR-Code Phishing (Quishing)"
+    assert any(ind.indicator_type == "quishing_qr_payload" for ind in result["indicators"])
+    assert any(ind.indicator_type == "lookalike_domain" for ind in result["indicators"])
+
+
+def test_academic_and_government_impersonation():
+    """TASK-24: Validates academic and government authority persona detection."""
+    # Academic Dean impersonation
+    acad_res = impersonation_detector.analyze(
+        sender_name="Dean Arthur Vance (Academic Affairs)",
+        sender_address="dean.arthur.vance@yahoo.com",
+        content="Urgent wire transfer needed for academic conference."
+    )
+    assert acad_res["confidence"] >= 0.90
+    assert acad_res["threat_category"] == "Academic Leadership Impersonation"
+    assert any(ind.indicator_type == "vip_webmail_discrepancy" for ind in acad_res["indicators"])
+
+    # Government Tax Authority impersonation
+    gov_res = impersonation_detector.analyze(
+        sender_name="Internal Revenue Tax Authority Officer",
+        sender_address="irs-official-division@gmail.com",
+        content="Notice of delinquency: submit fine immediately to prevent asset seizure."
+    )
+    assert gov_res["confidence"] >= 0.90
+    assert gov_res["threat_category"] == "Government Official Impersonation"
+    assert any(ind.indicator_type == "vip_webmail_discrepancy" for ind in gov_res["indicators"])
+
+
+def test_malware_detector():
+    """TASK-25: Validates malware hashes, double extensions, and binary entropy."""
+    from app.detectors.malware import malware_detector
+
+    # 1. Double extension check
+    double_res = malware_detector.analyze(
+        filename="Q3_Bonus_Report.pdf.exe",
+        file_bytes=b"MZ\x90\x00\x03Test PE payload header with dummy bytes"
+    )
+    assert double_res["confidence"] >= 0.90
+    assert double_res["threat_category"] == "Deceptive Malware Dropper"
+    assert any(ind.indicator_type == "dangerous_double_extension" for ind in double_res["indicators"])
+
+    # 2. Known EICAR hash match
+    eicar_payload = b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+    eicar_res = malware_detector.analyze(
+        filename="eicar.com",
+        file_bytes=eicar_payload
+    )
+    assert eicar_res["confidence"] >= 0.95
+    assert "EICAR" in eicar_res["threat_category"]
+    assert any(ind.indicator_type == "known_malware_hash_signature" for ind in eicar_res["indicators"])
+
+
+def test_network_traffic_detector():
+    """TASK-26: Validates port scan sweeps (T1046) and DNS tunneling (T1071.004)."""
+    from app.detectors.network import network_detector
+
+    # 1. Port scan sweep
+    flows = [{"source_ip": "194.26.29.112", "dest_ip": "10.0.0.1", "dest_port": p, "protocol": "TCP"} for p in range(1, 25)]
+    net_res = network_detector.analyze_flows(flows)
+    assert net_res["confidence"] >= 0.85
+    assert "Port Scan" in net_res["threat_category"]
+    assert any(ind.indicator_type == "network_port_scan_sweep" for ind in net_res["indicators"])
+    assert "T1046" in net_res["metadata"]["mitre_techniques"]
+
+    # 2. DNS tunneling
+    dns_flows = [{
+        "source_ip": "10.0.0.50",
+        "dest_ip": "8.8.8.8",
+        "dest_port": 53,
+        "protocol": "DNS",
+        "payload": "dGhpcyBpcyBhIGhpZ2ggZW50cm9weSBkYXRhIHBheWxvYWQgZXhmaWx0cmF0aW9u.tunnel.c2-darknet.xyz"
+    }]
+    tunnel_res = network_detector.analyze_flows(dns_flows)
+    assert tunnel_res["confidence"] >= 0.90
+    assert "DNS Tunneling" in tunnel_res["threat_category"]
+    assert any(ind.indicator_type == "dns_tunneling_exfiltration" for ind in tunnel_res["indicators"])
+
+
+def test_api_abuse_and_exfiltration():
+    """TASK-27: Validates API 401 bursts and excessive egress exfiltration."""
+    result = anomaly_detector.analyze(
+        user_id="usr_admin",
+        ip_address="45.133.1.88",
+        device_id="python-requests/2.31.0",
+        location="Frankfurt, Germany",
+        unauthorized_http_count=22,
+        egress_mb=650.0
+    )
+    assert result["confidence"] >= 0.90
+    assert any(ind.indicator_type == "api_abuse_burst" for ind in result["indicators"])
+    assert any(ind.indicator_type == "excessive_egress_exfiltration" for ind in result["indicators"])
+
+
+def test_media_ela_and_voice_clone():
+    """TASK-28 & TASK-29: Validates image ELA tampering and synthetic audio voice clone."""
+    from app.detectors.media import media_detector
+    from PIL import Image
+    import io
+
+    # 1. ELA analysis with clean image
+    img = Image.new("RGB", (100, 100), color=(73, 109, 137))
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=90)
+    ela_res = media_detector.analyze_image_ela(buf.getvalue())
+    assert "authenticity_score" in ela_res
+    assert ela_res["authenticity_score"] >= 0.70
+
+    # 2. Audio voice clone analysis
+    audio_dummy = bytes([128] * 10000)
+    audio_res = media_detector.analyze_audio_synthetic(audio_dummy)
+    assert "authenticity_score" in audio_res
+

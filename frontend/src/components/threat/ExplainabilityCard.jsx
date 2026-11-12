@@ -57,6 +57,37 @@ export default function ExplainabilityCard({ result, onSimulateAction }) {
         </div>
       </div>
 
+      {/* Forensic Metadata Chips (Quishing, ELA, MITRE, Malware) */}
+      {result.metadata && Object.keys(result.metadata).length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {result.metadata.authenticity_score !== undefined && (
+            <span style={{ fontSize: '0.72rem', background: result.metadata.authenticity_score < 0.4 ? 'rgba(244, 63, 94, 0.2)' : 'rgba(16, 185, 129, 0.2)', color: result.metadata.authenticity_score < 0.4 ? '#f43f5e' : '#10b981', border: '1px solid rgba(255,255,255,0.1)', padding: '3px 8px', borderRadius: '4px' }}>
+              🔬 Authenticity Score: {(result.metadata.authenticity_score * 100).toFixed(0)}%
+            </span>
+          )}
+          {result.metadata.quishing_detected && (
+            <span style={{ fontSize: '0.72rem', background: 'rgba(245, 158, 11, 0.2)', color: '#f59e0b', border: '1px solid rgba(245, 158, 11, 0.3)', padding: '3px 8px', borderRadius: '4px' }}>
+              📱 QR Quishing Target: {result.metadata.decoded_url}
+            </span>
+          )}
+          {result.metadata.sha256 && (
+            <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '3px 8px', borderRadius: '4px' }}>
+              🛡️ SHA-256: {result.metadata.sha256.substring(0, 16)}...
+            </span>
+          )}
+          {result.metadata.mitre_techniques && result.metadata.mitre_techniques.map(tech => (
+            <span key={tech} style={{ fontSize: '0.72rem', background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '3px 8px', borderRadius: '4px' }}>
+              🎯 MITRE: {tech}
+            </span>
+          ))}
+          {result.metadata.velocity_kmh && (
+            <span style={{ fontSize: '0.72rem', background: 'rgba(244, 63, 94, 0.2)', color: '#f43f5e', border: '1px solid rgba(244, 63, 94, 0.3)', padding: '3px 8px', borderRadius: '4px' }}>
+              ✈️ Impossible Velocity: {result.metadata.velocity_kmh} km/h
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Concrete Evidence Points */}
       <div>
         <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#38bdf8', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>

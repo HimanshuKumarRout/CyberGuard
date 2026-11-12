@@ -28,6 +28,24 @@
       "expected_severity": "Safe"
     }
   ],
+  "quishing_scenarios": [
+    {
+      "id": "sample_quish_01",
+      "title": "Payroll Tax QR-Code Lure (Quishing)",
+      "filename": "payroll_2026_qr_portal.png",
+      "extracted_url": "https://paypa1-update.xyz/verify-login",
+      "expected_category": "QR-Code Phishing (Quishing)",
+      "expected_severity": "Critical"
+    },
+    {
+      "id": "sample_quish_02",
+      "title": "Two-Factor Auth Reset QR Poster",
+      "filename": "okta_mfa_setup_scan.png",
+      "extracted_url": "http://192.168.1.50/okta-reconfigure.html",
+      "expected_category": "QR-Code Phishing (Quishing)",
+      "expected_severity": "Critical"
+    }
+  ],
   "impersonation_scenarios": [
     {
       "id": "sample_imper_01",
@@ -39,13 +57,21 @@
       "expected_severity": "Critical"
     },
     {
-      "id": "sample_imper_02",
-      "title": "Synthetic Audio Deepfake Verification",
-      "sender_name": "VP Finance Marcus Vance",
-      "sender_address": "marcus.vance@internal.corp",
-      "content": "I am sending you an audio voice memo authorizing the transfer request since I am boarding a flight.",
-      "media_url": "https://storage.cyberguard.internal/samples/synthetic_voice_clone_artifact.wav",
-      "expected_category": "Synthetic Deepfake Media",
+      "id": "sample_imper_academic",
+      "title": "Academic Dean Tuition Redirection (TASK-24)",
+      "sender_name": "Dean Arthur Vance (Academic Affairs)",
+      "sender_address": "dean.arthur.vance@yahoo.com",
+      "content": "Urgent notice to student finance: wire outstanding laboratory research grant funds to the secondary escrow account immediately.",
+      "expected_category": "Academic Leadership Impersonation",
+      "expected_severity": "Critical"
+    },
+    {
+      "id": "sample_imper_gov",
+      "title": "Federal Tax Authority Audit Notice (TASK-24)",
+      "sender_name": "Internal Revenue Tax Authority Officer",
+      "sender_address": "tax-enforcement-division@gmail.com",
+      "content": "Official Legal Summons: Your corporate tax filing is delinquent. Settle penalty immediately to prevent asset freeze.",
+      "expected_category": "Government Official Impersonation",
       "expected_severity": "Critical"
     },
     {
@@ -56,6 +82,59 @@
       "content": "Good morning team, please find attached the revised Q3 sprint goals discussed during yesterday's all-hands meeting.",
       "expected_category": "Legitimate Identity",
       "expected_severity": "Safe"
+    }
+  ],
+  "malware_scenarios": [
+    {
+      "id": "sample_malware_01",
+      "title": "Double Extension Trojan Dropper (TASK-25)",
+      "filename": "Q3_Executive_Bonus_List.pdf.exe",
+      "file_content_raw": "MZ\\x90\\x00\\x03This program cannot be run in DOS mode. UPX packed payload data filler bytes",
+      "expected_category": "Deceptive Malware Dropper",
+      "expected_severity": "Critical"
+    },
+    {
+      "id": "sample_malware_eicar",
+      "title": "Standard EICAR Test Signature (TASK-25)",
+      "filename": "eicar_test_artifact.com",
+      "file_content_raw": "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*",
+      "expected_category": "Malware: EICAR Standard AV Test Dropper",
+      "expected_severity": "Critical"
+    }
+  ],
+  "network_scenarios": [
+    {
+      "id": "sample_net_portscan",
+      "title": "Reconnaissance Port Scan Sweep (TASK-26 / MITRE T1046)",
+      "flows": [
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 21, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 22, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 23, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 25, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 80, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 110, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 143, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 443, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 445, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 1433, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 3306, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 3389, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 5432, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 6379, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 8080, "protocol": "TCP"},
+        {"source_ip": "194.26.29.112", "dest_ip": "10.0.0.5", "dest_port": 8443, "protocol": "TCP"}
+      ],
+      "expected_category": "Reconnaissance: Port Scan Sweep",
+      "expected_severity": "High"
+    },
+    {
+      "id": "sample_net_dnstunnel",
+      "title": "C2 DNS Tunneling Exfiltration (TASK-26 / MITRE T1071.004)",
+      "flows": [
+        {"source_ip": "10.0.0.45", "dest_ip": "8.8.8.8", "dest_port": 53, "protocol": "DNS", "payload": "dGhpcyBpcyBhIGhpZ2ggZW50cm9weSBkYXRhIHBheWxvYWQgZXhmaWx0cmF0aW9u.tunnel.c2-darknet.xyz"}
+      ],
+      "expected_category": "Command & Control: DNS Tunneling",
+      "expected_severity": "Critical"
     }
   ],
   "anomaly_scenarios": [
@@ -82,6 +161,19 @@
       "session_duration": 10,
       "expected_category": "Credential Stuffing / Brute-Force",
       "expected_severity": "High"
+    },
+    {
+      "id": "sample_anom_api",
+      "title": "API Token Abuse Burst & Data Egress (TASK-27)",
+      "user_id": "usr_developer_09",
+      "ip_address": "45.133.1.88",
+      "device_id": "python-requests/2.31.0",
+      "location": "Moscow, Russia",
+      "unauthorized_http_count": 28,
+      "egress_mb": 620.0,
+      "target_endpoint": "/api/v2/customer-records",
+      "expected_category": "Data Exfiltration Anomaly",
+      "expected_severity": "Critical"
     },
     {
       "id": "sample_anom_benign",
