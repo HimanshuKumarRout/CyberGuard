@@ -53,8 +53,16 @@ export function SocDataProvider({ children }) {
       let result;
       if (type === 'phishing') {
         result = await api.analyzePhishing(payload);
+      } else if (type === 'quishing') {
+        result = await api.analyzeQuishing(payload);
       } else if (type === 'impersonation') {
         result = await api.analyzeImpersonation(payload);
+      } else if (type === 'malware') {
+        result = await api.analyzeMalware(payload);
+      } else if (type === 'network') {
+        result = await api.analyzeNetwork(payload);
+      } else if (type === 'media') {
+        result = await api.analyzeMedia(payload);
       } else {
         result = await api.analyzeAnomaly(payload);
       }

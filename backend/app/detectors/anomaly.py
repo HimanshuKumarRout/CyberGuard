@@ -1,7 +1,7 @@
 """
 Scenario 3: Credential Theft & Behavioral Anomaly Detector
 Evaluates impossible travel velocity, brute-force password spraying patterns,
-and anomalous device/session characteristics.
+anomalous device/session characteristics, and TASK-27: API Abuse & Data-Exfiltration telemetry.
 """
 import math
 from typing import Dict, Any, List, Optional, Tuple
@@ -46,12 +46,14 @@ class AnomalyDetector:
             "last_coords": (40.7128, -74.0060),
             "last_timestamp_offset_hours": 0.5,  # 30 minutes ago
             "known_device": "dev_macbook_pro_04",
+            "baseline_egress_mb": 25.0,
         },
         "usr_admin": {
             "last_location": "San Francisco",
             "last_coords": (37.7749, -122.4194),
             "last_timestamp_offset_hours": 1.0,
             "known_device": "dev_thinkpad_admin",
+            "baseline_egress_mb": 50.0,
         }
     }
 
@@ -65,10 +67,13 @@ class AnomalyDetector:
         failed_attempts: int = 0,
         session_duration: int = 0,
         latitude: Optional[float] = None,
-        longitude: Optional[float] = None
+        longitude: Optional[float] = None,
+        unauthorized_http_count: int = 0,
+        egress_mb: float = 0.0,
+        target_endpoint: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Analyzes authentication event parameters for velocity and credential anomalies.
+        Analyzes authentication and API event parameters for velocity, credential, and exfiltration anomalies.
         """
         indicators: List[Indicator] = []
         model_confidence = 0.05
@@ -79,7 +84,10 @@ class AnomalyDetector:
             "device_id": device_id,
             "location": location,
             "failed_attempts": failed_attempts,
-            "session_duration": session_duration
+            "session_duration": session_duration,
+            "unauthorized_http_count": unauthorized_http_count,
+            "egress_mb": egress_mb,
+            "target_endpoint": target_endpoint
         }
 
         # 1. Impossible Travel Calculation
@@ -154,7 +162,34 @@ class AnomalyDetector:
             )
             model_confidence = max(model_confidence, 0.40)
 
-        # 4. Fallback baseline if no anomalies
+        # 4. TASK-27: API Abuse Anomaly (Burst of HTTP 401/403 Unauthorized Responses)
+        if unauthorized_http_count >= 15:
+            indicators.append(
+                Indicator(
+                    indicator_type="api_abuse_burst",
+                    indicator_value=f"Burst of {unauthorized_http_count} HTTP 401/403 unauthorized calls in 5-minute window (token brute-forcing / scraping)",
+                    severity=Severity.CRITICAL,
+                    weight=0.50
+                )
+            )
+            model_confidence = max(model_confidence, 0.92)
+            threat_category = "API Abuse & Token Brute-Force"
+
+        # 5. TASK-27: Data-Exfiltration Egress Spike Anomaly
+        user_baseline_egress = baseline.get("baseline_egress_mb", 30.0) if baseline else 30.0
+        if egress_mb >= 500.0 or (egress_mb > 100.0 and egress_mb > user_baseline_egress * 5.0):
+            indicators.append(
+                Indicator(
+                    indicator_type="excessive_egress_exfiltration",
+                    indicator_value=f"Egress volume of {egress_mb:.1f} MB exceeds baseline threshold ({user_baseline_egress:.1f} MB) within short duration (MITRE T1041)",
+                    severity=Severity.CRITICAL,
+                    weight=0.55
+                )
+            )
+            model_confidence = max(model_confidence, 0.95)
+            threat_category = "Data Exfiltration Anomaly"
+
+        # 6. Fallback baseline if no anomalies
         if not indicators:
             model_confidence = 0.05
             threat_category = "Normal Authentication"

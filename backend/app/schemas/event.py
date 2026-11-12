@@ -122,3 +122,32 @@ class AnomalyAnalysisRequest(BaseModel):
     session_duration: int = Field(default=0, ge=0, description="Active session duration in seconds")
     latitude: Optional[float] = Field(default=None, description="Geo latitude")
     longitude: Optional[float] = Field(default=None, description="Geo longitude")
+    unauthorized_http_count: int = Field(default=0, ge=0, description="Burst count of HTTP 401/403 responses")
+    egress_mb: float = Field(default=0.0, ge=0.0, description="Egress payload volume in MB")
+    target_endpoint: Optional[str] = Field(default=None, description="Target API endpoint or resource")
+
+
+class QuishingAnalysisRequest(BaseModel):
+    image_base64: Optional[str] = Field(default=None, description="Base64 encoded QR code image")
+    extracted_url: Optional[str] = Field(default=None, description="Decoded or manual QR destination URL")
+    filename: Optional[str] = Field(default="qr_code.png", description="Originating filename")
+
+
+class MalwareAnalysisRequest(BaseModel):
+    filename: str = Field(..., description="Filename including extension (e.g. invoice.pdf.exe)")
+    file_base64: Optional[str] = Field(default=None, description="Base64 encoded file payload")
+    file_content_raw: Optional[str] = Field(default=None, description="Raw text or test payload string")
+    declared_mime: Optional[str] = Field(default=None, description="Declared MIME type")
+
+
+class NetworkAnalysisRequest(BaseModel):
+    flows: Optional[List[Dict[str, Any]]] = Field(default=None, description="Array of network flow records")
+    pcap_base64: Optional[str] = Field(default=None, description="Base64 encoded raw PCAP capture")
+    filename: Optional[str] = Field(default="traffic.pcap", description="PCAP filename")
+
+
+class MediaAnalysisRequest(BaseModel):
+    media_type: str = Field(default="image", description="Media modality: image or audio")
+    media_base64: Optional[str] = Field(default=None, description="Base64 encoded image or audio bytes")
+    filename: Optional[str] = Field(default="sample.jpg", description="Media filename")
+

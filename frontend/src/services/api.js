@@ -83,6 +83,46 @@ export const api = {
     return res.json();
   },
 
+  async analyzeQuishing(payload) {
+    const res = await fetch('/api/analyze/quishing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Quishing analysis failed');
+    return res.json();
+  },
+
+  async analyzeMalware(payload) {
+    const res = await fetch('/api/analyze/malware', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Malware analysis failed');
+    return res.json();
+  },
+
+  async analyzeNetwork(payload) {
+    const res = await fetch('/api/analyze/network', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Network analysis failed');
+    return res.json();
+  },
+
+  async analyzeMedia(payload) {
+    const res = await fetch('/api/analyze/media', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Media analysis failed');
+    return res.json();
+  },
+
   // Containment Execution
   async executeResponse(payload) {
     const res = await fetch('/api/responses/execute', {

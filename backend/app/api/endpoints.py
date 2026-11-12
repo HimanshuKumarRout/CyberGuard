@@ -97,6 +97,18 @@ async def get_current_user(token: Optional[str] = Query(None)):
 
 
 
+from app.schemas.event import (
+    UnifiedEvent,
+    PhishingAnalysisRequest,
+    ImpersonationAnalysisRequest,
+    AnomalyAnalysisRequest,
+    QuishingAnalysisRequest,
+    MalwareAnalysisRequest,
+    NetworkAnalysisRequest,
+    MediaAnalysisRequest,
+)
+import base64
+
 # 1. Analysis Endpoints
 @router.post("/analyze/phishing", response_model=UnifiedEvent, summary="Analyze text & URLs for phishing threats")
 async def analyze_phishing(payload: PhishingAnalysisRequest):
@@ -108,6 +120,22 @@ async def analyze_phishing(payload: PhishingAnalysisRequest):
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Phishing analysis failed: {str(e)}")
+
+
+@router.post("/analyze/quishing", response_model=UnifiedEvent, summary="TASK-22: Analyze QR-Code images for quishing threats")
+async def analyze_quishing(payload: QuishingAnalysisRequest):
+    try:
+        image_bytes = b""
+        if payload.image_base64:
+            clean_b64 = payload.image_base64.split(",")[-1]
+            image_bytes = base64.b64decode(clean_b64)
+        return await orchestrator.process_quishing(
+            image_bytes=image_bytes,
+            filename=payload.filename,
+            extracted_url=payload.extracted_url
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Quishing analysis failed: {str(e)}")
 
 
 @router.post("/analyze/impersonation", response_model=UnifiedEvent, summary="Analyze sender & media for impersonation/deepfakes")
@@ -123,7 +151,31 @@ async def analyze_impersonation(payload: ImpersonationAnalysisRequest):
         raise HTTPException(status_code=500, detail=f"Impersonation analysis failed: {str(e)}")
 
 
-@router.post("/analyze/anomaly", response_model=UnifiedEvent, summary="Analyze authentication telemetry for impossible travel & ATO")
+@router.post("/analyze/media", response_model=UnifiedEvent, summary="TASK-28 & TASK-29: Analyze media ELA tampering and synthetic audio")
+async def analyze_media(payload: MediaAnalysisRequest):
+    try:
+        media_bytes = b""
+        if payload.media_base64:
+            clean_b64 = payload.media_base64.split(",")[-1]
+            media_bytes = base64.b64decode(clean_b64)
+
+        if payload.media_type == "audio":
+            return await orchestrator.process_media(
+                audio_bytes=media_bytes,
+                filename=payload.filename,
+                media_type="audio"
+            )
+        else:
+            return await orchestrator.process_media(
+                image_bytes=media_bytes,
+                filename=payload.filename,
+                media_type="image"
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Media analysis failed: {str(e)}")
+
+
+@router.post("/analyze/anomaly", response_model=UnifiedEvent, summary="Analyze authentication & API telemetry for impossible travel, ATO & exfiltration")
 async def analyze_anomaly(payload: AnomalyAnalysisRequest):
     try:
         return await orchestrator.process_anomaly(
@@ -134,10 +186,53 @@ async def analyze_anomaly(payload: AnomalyAnalysisRequest):
             failed_attempts=payload.failed_attempts,
             session_duration=payload.session_duration,
             latitude=payload.latitude,
-            longitude=payload.longitude
+            longitude=payload.longitude,
+            unauthorized_http_count=payload.unauthorized_http_count,
+            egress_mb=payload.egress_mb,
+            target_endpoint=payload.target_endpoint
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Anomaly analysis failed: {str(e)}")
+
+
+@router.post("/analyze/malware", response_model=UnifiedEvent, summary="TASK-25: Inspect file attachments for malware signatures, double extensions & entropy")
+async def analyze_malware(payload: MalwareAnalysisRequest):
+    try:
+        file_bytes = b""
+        if payload.file_base64:
+            clean_b64 = payload.file_base64.split(",")[-1]
+            file_bytes = base64.b64decode(clean_b64)
+        elif payload.file_content_raw:
+            file_bytes = payload.file_content_raw.encode("utf-8")
+        else:
+            # Default mock payload if none provided
+            file_bytes = b"MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00" + b"\xff" * 500
+
+        return await orchestrator.process_malware(
+            filename=payload.filename,
+            file_bytes=file_bytes,
+            declared_mime=payload.declared_mime
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Malware analysis failed: {str(e)}")
+
+
+@router.post("/analyze/network", response_model=UnifiedEvent, summary="TASK-26: Analyze network flows and PCAPs for port scans & DNS tunneling")
+async def analyze_network(payload: NetworkAnalysisRequest):
+    try:
+        pcap_bytes = None
+        if payload.pcap_base64:
+            clean_b64 = payload.pcap_base64.split(",")[-1]
+            pcap_bytes = base64.b64decode(clean_b64)
+
+        return await orchestrator.process_network(
+            flow_records=payload.flows,
+            pcap_bytes=pcap_bytes,
+            filename=payload.filename
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Network analysis failed: {str(e)}")
+
 
 
 # 2. Event & Incident Management
