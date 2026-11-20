@@ -47,7 +47,6 @@ frontend/
 │   ├── layouts/                    # Layout wrappers
 │   │   └── MainLayout.jsx          # Protected workspace shell (Header + Sidebar + Outlet)
 │   ├── pages/                      # Domain-isolated route views
-│   │   ├── auth/                   # Login & Signup authentication views
 │   │   ├── dashboard/              # Command Center executive overview
 │   │   ├── incidents/              # SOC incident triage queue & resolution
 │   │   ├── intel/                  # Interactive MITRE ATT&CK matrix

@@ -344,7 +344,6 @@ CYBERGUARD/
 │   │   ├── context/         # Centralized Auth & SOC Telemetry React Contexts
 │   │   ├── layouts/         # Protected MainLayout shell
 │   │   ├── pages/           # Domain-isolated page views
-│   │   │   ├── auth/        # Login, Signup
 │   │   │   ├── dashboard/   # Executive Command Center
 │   │   │   ├── incidents/   # Incident Triage & Resolution
 │   │   │   ├── intel/       # MITRE ATT&CK Matrix

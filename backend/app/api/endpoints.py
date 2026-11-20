@@ -27,73 +27,15 @@ class ExecuteResponseRequest(BaseModel):
     reason: Optional[str] = "Automated or analyst-approved mitigation trigger"
 
 
-# Auth schemas
-class LoginRequest(BaseModel):
-    email: str
-    password: str
+# 0. Session Health & Open Operations (User management removed)
+@router.get("/auth/me", summary="System session check")
+async def get_current_user():
+    return {"status": "authenticated", "mode": "open_access"}
 
 
-class RegisterRequest(BaseModel):
-    name: str
-    email: str
-    password: str
-    role: Optional[str] = "Tier-1 SOC Lead"
-
-
-# 0. Authentication Endpoints
-@router.post("/auth/login", summary="SOC Analyst login")
-async def login(payload: LoginRequest):
-    user = db.get_user_by_email(payload.email)
-    if not user:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    from app.auth.security import verify_password, create_access_token
-    if not verify_password(payload.password, user.get("password_hash", "")):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    
-    token = create_access_token({
-        "sub": user["id"],
-        "name": user["name"],
-        "email": user["email"],
-        "role": user["role"]
-    })
-    return {
-        "token": token,
-        "user": {
-            "id": user["id"],
-            "name": user["name"],
-            "email": user["email"],
-            "role": user["role"]
-        }
-    }
-
-
-@router.post("/auth/register", summary="Register new SOC Analyst")
-async def register(payload: RegisterRequest):
-    existing = db.get_user_by_email(payload.email)
-    if existing:
-        raise HTTPException(status_code=400, detail="User with this email already exists")
-    
-    from app.auth.security import hash_password
-    pw_hash = hash_password(payload.password)
-    user = db.create_user(name=payload.name, email=payload.email, password_hash=pw_hash, role=payload.role or "Tier-1 SOC Lead")
-    return {
-        "message": "Account created successfully. Please sign in with your credentials.",
-        "user": user
-    }
-
-
-@router.get("/auth/me", summary="Get currently authenticated SOC user profile")
-async def get_current_user(token: Optional[str] = Query(None)):
-    from app.auth.security import decode_access_token
-    if not token:
-        raise HTTPException(status_code=401, detail="Missing auth token")
-    payload = decode_access_token(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
-    user = db.get_user_by_id(payload.get("sub", ""))
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"user": user}
+@router.post("/auth/login", summary="Legacy auth endpoint")
+async def login():
+    return {"status": "authenticated", "mode": "open_access"}
 
 
 

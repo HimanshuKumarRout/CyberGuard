@@ -1,43 +1,15 @@
 import React from 'react';
 import { Route, Navigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 
-const Login = React.lazy(() => import('../../pages/auth/Login'));
-const Signup = React.lazy(() => import('../../pages/auth/Signup'));
-
-export function PublicOnlyRoute({ children }) {
-  const { isAuthenticated } = useAuth();
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  return children;
-}
-
+/**
+ * Auth Routes: User login has been removed from CYBERGUARD.
+ * Any legacy auth URLs immediately redirect directly to the SOC Command Center.
+ */
 export const authRoutes = (
   <React.Fragment key="auth-routes">
-    <Route
-      path="/login"
-      element={
-        <PublicOnlyRoute>
-          <Login />
-        </PublicOnlyRoute>
-      }
-    />
-    <Route
-      path="/signin"
-      element={<Navigate to="/login" replace />}
-    />
-    <Route
-      path="/signup"
-      element={
-        <PublicOnlyRoute>
-          <Signup />
-        </PublicOnlyRoute>
-      }
-    />
-    <Route
-      path="/register"
-      element={<Navigate to="/signup" replace />}
-    />
+    <Route path="/login" element={<Navigate to="/dashboard" replace />} />
+    <Route path="/signin" element={<Navigate to="/dashboard" replace />} />
+    <Route path="/signup" element={<Navigate to="/dashboard" replace />} />
+    <Route path="/register" element={<Navigate to="/dashboard" replace />} />
   </React.Fragment>
 );

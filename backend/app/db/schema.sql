@@ -1,14 +1,8 @@
 -- CYBERGUARD Database Schema (PostgreSQL for Supabase Cloud)
--- Exclusively manages Supabase Cloud PostgreSQL tables
+-- Pure threat operations: events, indicators, incidents, explanations, responses, model runs, and audit logs.
+-- User authentication and user tables have been completely removed from CYBERGUARD.
 
-CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    name TEXT NOT NULL,
-    role TEXT NOT NULL DEFAULT 'Analyst',
-    password_hash TEXT DEFAULT '',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+DROP TABLE IF EXISTS users CASCADE;
 
 CREATE TABLE IF NOT EXISTS events (
     id TEXT PRIMARY KEY,
@@ -83,14 +77,14 @@ CREATE TABLE IF NOT EXISTS model_runs (
 
 CREATE TABLE IF NOT EXISTS audit_logs (
     id TEXT PRIMARY KEY,
-    actor TEXT NOT NULL,
+    actor TEXT NOT NULL DEFAULT 'System',
     action TEXT NOT NULL,
     event_id TEXT,
     details TEXT DEFAULT '{}',
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for high-throughput SOC search
+-- Indexes for high-throughput SOC search and triage queries
 CREATE INDEX IF NOT EXISTS idx_events_risk_level ON events(risk_level);
 CREATE INDEX IF NOT EXISTS idx_events_detector ON events(detector);
 CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);
