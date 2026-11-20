@@ -17,43 +17,47 @@ At the core of CYBERGUARD is an institutional-grade, deterministic threat proces
 
 ```mermaid
 flowchart TD
-    subgraph S1 [Stage 1: Ingestion & Normalization]
-        I1[Raw Payloads\nEmails, URLs, Auth Logs, Media] --> N1[Sanitizer & Envelope Validator]
-        N1 --> UEM[Unified Event Model Envelope\nUEM Schema Contract]
+    subgraph S1 ["Stage 1: Ingestion & Normalization"]
+        I1["Raw Payloads<br/>Emails, URLs, Auth Logs, Media"] --> N1["Sanitizer & Envelope Validator"]
+        N1 --> UEM["Unified Event Model Envelope<br/>UEM Schema Contract"]
     end
 
-    subgraph S2 [Stage 2: Detection & Feature Extraction]
-        UEM --> DET[Threat Orchestrator Router]
-        DET --> D1[Phishing & URL Detector\nNLP Urgency, Levenshtein, Entropy]
-        DET --> D2[Impersonation & Media Detector\nVIP Spoofing, BEC, Deepfakes]
-        DET --> D3[Behavioral & ATO Detector\nHaversine Velocity, Brute Force]
+    subgraph S2 ["Stage 2: Detection & Feature Extraction"]
+        UEM --> DET["Threat Orchestrator Router"]
+        DET --> D1["Phishing & URL Detector<br/>NLP Urgency, Levenshtein, Entropy"]
+        DET --> D2["Impersonation & Media Detector<br/>VIP Spoofing, BEC, Deepfakes"]
+        DET --> D3["Behavioral & ATO Detector<br/>Haversine Velocity, Brute Force"]
     end
 
-    subgraph S3 [Stage 3: Threat Classification]
-        D1 & D2 & D3 --> CLS[Taxonomy & MITRE Mapping\nCategory, Attack Subtype, Confidence C_model]
+    subgraph S3 ["Stage 3: Threat Classification"]
+        D1 --> CLS["Taxonomy & MITRE Mapping<br/>Category, Attack Subtype, Confidence"]
+        D2 --> CLS
+        D3 --> CLS
     end
 
-    subgraph S4 [Stage 4: Calibrated Risk Assessment]
-        CLS --> RSK[Calibrated Hybrid Scoring Engine\nRisk = min 100, C_model x 60 + I_norm x 40]
-        RSK --> BAND[5-Tier Risk Band\nSafe | Low | Medium | High | Critical]
+    subgraph S4 ["Stage 4: Calibrated Risk Assessment"]
+        CLS --> RSK["Calibrated Hybrid Scoring Engine<br/>Risk = min(100, C_model x 60 + I_norm x 40)"]
+        RSK --> BAND["5-Tier Risk Band<br/>Safe | Low | Medium | High | Critical"]
     end
 
-    subgraph S5 [Stage 5: Explainable AI Rationale]
-        BAND --> XAI[Explainability Engine - Rule 1.3\nZero Naked Alerts Invariant]
-        XAI --> EXP[Structured Rationale\n1. Summary Headline\n2. Quantified Evidence Points\n3. Contextual Reasoning Narrative]
+    subgraph S5 ["Stage 5: Explainable AI Rationale"]
+        BAND --> XAI["Explainability Engine - Rule 1.3<br/>Zero Naked Alerts Invariant"]
+        XAI --> EXP["Structured Rationale<br/>1. Summary Headline<br/>2. Quantified Evidence Points<br/>3. Contextual Reasoning Narrative"]
     end
 
-    subgraph S6 [Stage 6: Alerting & Incident Escalation]
-        EXP --> TRG{Risk Score >= 60?}
-        TRG -- Yes --> INC[Auto-Create SOC Incident\nP1/P2 Priority, Queue Assignment]
-        TRG -- No --> TEL[Security Telemetry Logging]
-        INC & TEL --> DB[(Supabase PostgreSQL\nevents, incidents, indicators, audit)]
+    subgraph S6 ["Stage 6: Alerting & Incident Escalation"]
+        EXP --> TRG{"Risk Score >= 60?"}
+        TRG -->|Yes| INC["Auto-Create SOC Incident<br/>P1/P2 Priority, Queue Assignment"]
+        TRG -->|No| TEL["Security Telemetry Logging"]
+        INC --> DB[("Supabase PostgreSQL<br/>events, incidents, indicators, audit")]
+        TEL --> DB
     end
 
-    subgraph S7 [Stage 7: Response & Safe Containment]
-        INC & TEL --> RSP[Playbook Mitigation Recommender]
-        RSP --> SIM[Safe Simulation Sandbox - Rule 1.4\nSimulated API Dispatch & Audit Trail]
-        SIM --> ACT[Action Dispatch\nblock_url, quarantine_email, revoke_session]
+    subgraph S7 ["Stage 7: Response & Safe Containment"]
+        INC --> RSP["Playbook Mitigation Recommender"]
+        TEL --> RSP
+        RSP --> SIM["Safe Simulation Sandbox - Rule 1.4<br/>Simulated API Dispatch & Audit Trail"]
+        SIM --> ACT["Action Dispatch<br/>block_url, quarantine_email, revoke_session"]
     end
 ```
 
@@ -109,10 +113,18 @@ flowchart TD
   1. **Phishing & URL Detector (`phishing.py`):**
      - **NLP Psychological Triggers:** Identifies urgency triggers (*"within 24 hours"*, *"suspended immediately"*), authority exploitation (*"Compliance Officer"*, *"IT Helpdesk"*), and credential harvesting keywords.
      - **Levenshtein Distance Analysis:** Computes the minimal single-character edits required to transform the domain into high-value target brand domains:
-       $$\text{lev}_{a,b}(i, j) = \begin{cases} \max(i,j) & \text{if } \min(i,j) = 0, \\ \min \begin{cases} \text{lev}_{a,b}(i-1, j) + 1 \\ \text{lev}_{a,b}(i, j-1) + 1 \\ \text{lev}_{a,b}(i-1, j-1) + 1_{(a_i \neq b_j)} \end{cases} & \text{otherwise} \end{cases}$$
-       *Flags lookalike brand spoofing (e.g. `paypa1` $\rightarrow$ `paypal` has distance 1).*
+
+       $$
+       \text{lev}_{a,b}(i, j) = \begin{cases} \max(i,j) & \text{if } \min(i,j) = 0, \\ \min \begin{cases} \text{lev}_{a,b}(i-1, j) + 1 \\ \text{lev}_{a,b}(i, j-1) + 1 \\ \text{lev}_{a,b}(i-1, j-1) + 1_{(a_i \neq b_j)} \end{cases} & \text{otherwise} \end{cases}
+       $$
+
+       *Flags lookalike brand spoofing (e.g. `paypa1` &rarr; `paypal` has distance 1).*
      - **Shannon Entropy Analysis:** Computes domain lexical randomness to catch DGA (Domain Generation Algorithms) and obfuscated redirect subdomains:
-       $$H(X) = -\sum_{i=1}^{n} P(x_i) \log_2 P(x_i)$$
+
+       $$
+       H(X) = -\sum_{i=1}^{n} P(x_i) \log_2 P(x_i)
+       $$
+
        *Domains with $H(X) \ge 3.5$ are flagged for obfuscation.*
      - **Network Heuristics:** Flags raw IP address hosts (`http://192.168.1.5/login`) and suspicious top-level domains (`.xyz`, `.top`, `.tk`, `.ru`).
   2. **Impersonation & Media Detector (`impersonation.py`, `media.py`):**
@@ -151,9 +163,16 @@ flowchart TD
 #### Stage 4: Calibrated Hybrid Risk Assessment
 - **Objective:** Eliminate opaque black-box AI scoring by binding probabilistic machine learning confidences with deterministic security heuristics.
 - **The Calibrated Formula:**
-  $$\text{Risk Score} = \min\left(100, \; \left(C_{\text{model}} \times 60\right) + \left(I_{\text{norm}} \times 40\right)\right)$$
+
+  $$
+  \text{Risk Score} = \min\left(100, \; \left(C_{\text{model}} \times 60\right) + \left(I_{\text{norm}} \times 40\right)\right)
+  $$
+
   Where $C_{\text{model}}$ is the model confidence ($0.0 - 1.0$) and $I_{\text{norm}}$ is the normalized indicator sum:
-  $$I_{\text{norm}} = \min\left(1.0, \; \sum_{k=1}^{M} W(\text{severity}_k)\right)$$
+
+  $$
+  I_{\text{norm}} = \min\left(1.0, \; \sum_{k=1}^{M} W(\text{severity}_k)\right)
+  $$
 - **Indicator Weight Schedule ($W$):**
   - **Critical Severity:** $0.50$ (e.g., Levenshtein distance 1 to brand, travel velocity $>900\text{ km/h}$, raw IP host)
   - **High Severity:** $0.35$ (e.g., Urgency psychological cues, password harvesting prompts, $\ge 5$ brute force failures)
@@ -196,7 +215,10 @@ flowchart TD
     - **P2 Priority:** High risk events ($60 \le \text{Score} < 80$). Response required within standard SLA window.
     - **P3 Priority:** Medium/informational records logged for threat hunting.
 - **Incident State Lifecycle:**
-  $$\text{Open} \longrightarrow \text{In Investigation} \longrightarrow \text{Contained} \longrightarrow \text{Resolved}$$
+
+  $$
+  \text{Open} \longrightarrow \text{In Investigation} \longrightarrow \text{Contained} \longrightarrow \text{Resolved}
+  $$
 - **Multi-Table Relational Persistence (Supabase PostgreSQL):**
   - Transactionally commits events to `events`, extracted markers to `indicators`, rationale to `explanations`, and tickets to `incidents`.
   - Dispatches updates across real-time WebSockets and polling endpoints to synchronize the React SOC Command Center.
@@ -225,7 +247,7 @@ flowchart TD
 
 To illustrate the entire 7-stage lifecycle in action, consider an employee receiving a deceptive email:
 
-```
+```text
 [Raw Input]
 Sender: "security-alert@office365-updates.xyz"
 Subject: "CRITICAL: Office 365 Account Suspension Notice"
@@ -313,12 +335,11 @@ Automated containment actions (e.g., domain blacklisting, token revocation, host
 
 ## 📂 Repository Layout
 
-```
+```text
 CYBERGUARD/
 ├── backend/
 │   ├── app/
 │   │   ├── api/             # FastAPI REST endpoints
-│   │   ├── auth/            # JWT authentication & password hashing
 │   │   ├── db/              # Supabase Cloud client (PostgreSQL)
 │   │   ├── detectors/       # Phishing, Impersonation & Anomaly detectors
 │   │   ├── explain/         # Explainable AI (XAI) engine
@@ -360,7 +381,6 @@ CYBERGUARD/
 │   ├── README.md            # Frontend-specific architecture & UI documentation
 │   ├── package.json
 │   └── vite.config.js       # Reverse proxy configuration
-├── run_backend.py           # Convenience root launcher for backend
 ├── pytest.ini               # Pytest configuration
 ├── .env.example             # Environment configuration template
 └── .gitignore
@@ -441,3 +461,6 @@ All 14 tests validate:
 
 ---
 
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
