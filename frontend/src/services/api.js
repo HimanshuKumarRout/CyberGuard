@@ -141,36 +141,16 @@ export const api = {
     return res.json();
   },
 
-  // SOC Authentication
-  async login(email, password) {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Login failed');
-    }
-    return res.json();
+  // Session Stubs (User authentication removed)
+  async login() {
+    return { status: 'authenticated' };
   },
 
-  async register(name, email, password, role = 'Tier-1 SOC Lead') {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role })
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.detail || 'Registration failed');
-    }
-    return res.json();
+  async register() {
+    return { status: 'registered' };
   },
 
-  async getMe(token) {
-    const res = await fetch(`/api/auth/me?token=${encodeURIComponent(token)}`);
-    if (!res.ok) throw new Error('Failed to retrieve user profile');
-    return res.json();
+  async getMe() {
+    return { user: null, status: 'operational' };
   }
 };

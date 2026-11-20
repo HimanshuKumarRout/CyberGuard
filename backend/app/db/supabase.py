@@ -47,38 +47,19 @@ class DatabaseClient:
         self.init_db()
 
     def init_db(self):
-        """Verifies Supabase connectivity and ensures default SOC Lead user is seeded."""
+        """Verifies Supabase connectivity against core telemetry events table."""
         if not self.supabase_url or not self.supabase_key:
             logger.warning("Supabase credentials not configured; skipping initialization.")
             return
 
         try:
-            # Connectivity check
-            res = self.client.get("/users?select=id&limit=1")
+            # Connectivity check on core telemetry events table
+            res = self.client.get("/events?select=id&limit=1")
             if res.status_code not in (200, 206):
                 logger.error(f"Supabase connection test returned HTTP {res.status_code}: {res.text}")
                 return
 
-            # Ensure default SOC Lead user exists
-            lead_email = "himanshu@cyberguard.internal"
-            r_user = self.client.get(f"/users?email=eq.{lead_email}&select=id")
-            if r_user.status_code == 200 and not r_user.json():
-                from app.auth.security import hash_password
-                default_pw = hash_password("admin123")
-                self.client.post(
-                    "/users",
-                    json={
-                        "id": "usr_himanshu_lead",
-                        "email": lead_email,
-                        "name": "Himanshu Rout",
-                        "role": "Tier-1 SOC Lead",
-                        "password_hash": default_pw
-                    },
-                    headers={"Prefer": "return=minimal"}
-                )
-                logger.info(f"Seeded default SOC Lead user: {lead_email} in Supabase Cloud.")
-
-            logger.info("Supabase Cloud Database connected and initialized successfully.")
+            logger.info("Supabase Cloud Database connected and operational.")
         except Exception as e:
             logger.error(f"Failed to initialize Supabase Cloud database: {e}")
 
@@ -164,7 +145,7 @@ class DatabaseClient:
                     "threat_category": event_data.get("threat_category", "Threat"),
                     "risk_score": int(event_data.get("risk_score", 0)),
                     "risk_level": event_data.get("risk_level", "High"),
-                    "assigned_to": "Himanshu Rout"
+                    "assigned_to": "Unassigned"
                 }
                 self.client.post("/incidents", json=inc_row, headers={"Prefer": "resolution=merge-duplicates"})
 
@@ -351,51 +332,6 @@ class DatabaseClient:
         except Exception as e:
             logger.error(f"Failed to fetch threat categories from Supabase: {e}")
         return []
-
-    def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        """Fetches a user profile and credentials hash by email address."""
-        try:
-            clean_email = email.strip().lower()
-            res = self.client.get(f"/users?email=eq.{clean_email}&select=*")
-            if res.status_code == 200 and res.json():
-                return res.json()[0]
-        except Exception as e:
-            logger.error(f"Failed to get user by email {email} from Supabase: {e}")
-        return None
-
-    def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
-        """Fetches user public profile details by ID."""
-        try:
-            res = self.client.get(f"/users?id=eq.{user_id}&select=id,email,name,role,created_at")
-            if res.status_code == 200 and res.json():
-                return res.json()[0]
-        except Exception as e:
-            logger.error(f"Failed to get user by id {user_id} from Supabase: {e}")
-        return None
-
-    def create_user(self, name: str, email: str, password_hash: str, role: str = "Analyst") -> Dict[str, Any]:
-        """Registers a new user into Supabase Cloud users table."""
-        user_id = f"usr_{os.urandom(6).hex()}"
-        clean_email = email.strip().lower()
-        clean_name = name.strip()
-
-        user_data = {
-            "id": user_id,
-            "email": clean_email,
-            "name": clean_name,
-            "role": role,
-            "password_hash": password_hash
-        }
-
-        try:
-            res = self.client.post("/users", json=user_data, headers={"Prefer": "return=representation"})
-            if res.status_code in (200, 201) and res.json():
-                u = res.json()[0]
-                return {"id": u["id"], "email": u["email"], "name": u["name"], "role": u["role"]}
-        except Exception as e:
-            logger.error(f"Failed to create user {clean_email} in Supabase: {e}")
-
-        return {"id": user_id, "email": clean_email, "name": clean_name, "role": role}
 
     def clear_all_data(self):
         """Clears all events, incidents, indicators, explanations, responses, and audit logs in Supabase Cloud."""

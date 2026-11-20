@@ -1,11 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield, LogOut } from 'lucide-react';
+import { Shield } from 'lucide-react';
+import { useSocData } from '../../context/SocDataContext';
 
-export default function Header({ currentUser, onLogout }) {
-  const name = currentUser?.name || 'Himanshu Rout';
-  const role = currentUser?.role || 'Tier-1 SOC Lead';
-  const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'HR';
+export default function Header() {
+  const { stats, models, loading } = useSocData();
+
+  // Dynamic telemetry live tick / network jitter
+  const [telemetryTick, setTelemetryTick] = useState({
+    throughputJitter: 0,
+    latencyJitter: 0,
+    lastUpdate: Date.now()
+  });
+
+  useEffect(() => {
+    // Jitter interval to simulate live real-time network packets arriving at the sensor gateway
+    const interval = setInterval(() => {
+      setTelemetryTick({
+        throughputJitter: Math.floor(Math.random() * 51) - 25, // -25 to +25 evt/m fluctuation
+        latencyJitter: Math.floor(Math.random() * 5) - 2,      // -2 to +2 ms fluctuation
+        lastUpdate: Date.now()
+      });
+    }, 2200);
+    return () => clearInterval(interval);
+  }, []);
+
+  // 1. Dynamic Throughput: dynamically calculated from total events ingested + live stream jitter + analysis burst
+  const throughput = useMemo(() => {
+    const totalEvents = stats?.total_events || 0;
+    // Base rate starts at ~1,400 evt/m and scales with ingested event volume
+    const baseThroughput = 1380 + (totalEvents % 50) * 4;
+    // Burst boost when an analysis is actively running in Threat Studio
+    const burst = loading ? 280 : 0;
+    const computed = Math.max(900, baseThroughput + telemetryTick.throughputJitter + burst);
+    return computed.toLocaleString();
+  }, [stats?.total_events, loading, telemetryTick.throughputJitter]);
+
+  // 2. Dynamic P95 Latency: calculated from detector models' real-time benchmarks with live jitter
+  const p95Latency = useMemo(() => {
+    let baseP95 = 18;
+    if (models && models.length > 0) {
+      const validLatencies = models.map(m => m.latency_p95_ms).filter(Boolean);
+      if (validLatencies.length > 0) {
+        baseP95 = Math.round(validLatencies.reduce((a, b) => a + b, 0) / validLatencies.length);
+      }
+    }
+    // High load slightly increases latency
+    const loadShift = loading ? 6 : 0;
+    return Math.max(8, baseP95 + telemetryTick.latencyJitter + loadShift);
+  }, [models, loading, telemetryTick.latencyJitter]);
+
   return (
     <header style={{
       background: 'rgba(8, 11, 17, 0.95)',
@@ -57,54 +101,53 @@ export default function Header({ currentUser, onLogout }) {
         </div>
       </Link>
 
-      {/* Global Telemetry Ribbon */}
+      {/* Global Dynamic Telemetry Ribbon */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <div style={{ display: 'flex', gap: '16px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-          <div><span style={{ color: 'var(--text-muted)' }}>THROUGHPUT:</span> <span style={{ fontFamily: 'var(--font-mono)', color: '#38bdf8' }}>1,420 evt/m</span></div>
-          <div><span style={{ color: 'var(--text-muted)' }}>P95 LATENCY:</span> <span style={{ fontFamily: 'var(--font-mono)', color: '#10b981' }}>18 ms</span></div>
-          <div><span style={{ color: 'var(--text-muted)' }}>SANDBOX:</span> <span style={{ fontFamily: 'var(--font-mono)', color: '#f59e0b' }}>SIMULATED</span></div>
-        </div>
-        <div style={{ borderLeft: '1px solid var(--border-subtle)', paddingLeft: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            background: '#1e293b',
-            border: '1px solid #38bdf8',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            color: '#38bdf8'
-          }}>
-            {initials}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '18px',
+          fontSize: '0.8rem',
+          color: 'var(--text-secondary)',
+          background: 'rgba(15, 23, 42, 0.65)',
+          padding: '6px 14px',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--border-subtle)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: 'var(--text-muted)' }}>THROUGHPUT:</span>
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              color: '#38bdf8',
+              fontVariantNumeric: 'tabular-nums',
+              transition: 'color 0.2s ease'
+            }}>
+              {throughput} evt/m
+            </span>
           </div>
-          <div style={{ fontSize: '0.75rem' }}>
-            <div style={{ fontWeight: 600 }}>{name}</div>
-            <div style={{ color: 'var(--text-muted)' }}>{role}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: 'var(--text-muted)' }}>P95 LATENCY:</span>
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              color: p95Latency > 35 ? '#f59e0b' : '#10b981',
+              fontVariantNumeric: 'tabular-nums',
+              transition: 'color 0.2s ease'
+            }}>
+              {p95Latency} ms
+            </span>
           </div>
-          {onLogout && (
-            <button
-              onClick={onLogout}
-              title="Sign out of SOC session"
-              style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                borderRadius: 'var(--radius-sm)',
-                color: '#f87171',
-                cursor: 'pointer',
-                padding: '6px 8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginLeft: '6px',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <LogOut size={14} />
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: 'var(--text-muted)' }}>SANDBOX:</span>
+            <span style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontFamily: 'var(--font-mono)',
+              color: '#f59e0b'
+            }}>
+              <span className="status-pulse-amber"></span> SIMULATED
+            </span>
+          </div>
         </div>
       </div>
     </header>

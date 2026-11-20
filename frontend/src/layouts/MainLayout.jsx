@@ -3,17 +3,15 @@ import { Outlet } from 'react-router-dom';
 import Header from '../components/navigation/Header';
 import Sidebar from '../components/navigation/Sidebar';
 import LoadingFallback from '../components/common/LoadingFallback';
-import { useAuth } from '../context/AuthContext';
 import { useSocData } from '../context/SocDataContext';
 
 export default function MainLayout() {
-  const { currentUser, logout } = useAuth();
   const { notification, setNotification } = useSocData();
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Persistent SOC Command Header */}
-      <Header currentUser={currentUser} onLogout={logout} />
+      <Header />
 
       {/* Main Content Workspace */}
       <div style={{ display: 'flex', flex: 1 }}>

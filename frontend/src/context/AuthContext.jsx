@@ -1,50 +1,17 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
-import { api } from '../services/api';
+import React, { createContext, useContext, useMemo } from 'react';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('cyberguard_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-
-  const [authToken, setAuthToken] = useState(() => {
-    return localStorage.getItem('cyberguard_token') || null;
-  });
-
-  const login = useCallback(async (email, password) => {
-    const data = await api.login(email, password);
-    setCurrentUser(data.user);
-    setAuthToken(data.token);
-    localStorage.setItem('cyberguard_user', JSON.stringify(data.user));
-    localStorage.setItem('cyberguard_token', data.token);
-    return data;
-  }, []);
-
-  const logout = useCallback(() => {
-    setCurrentUser(null);
-    setAuthToken(null);
-    localStorage.removeItem('cyberguard_user');
-    localStorage.removeItem('cyberguard_token');
-  }, []);
-
-  const register = useCallback(async (name, email, password, role) => {
-    return await api.register(name, email, password, role);
-  }, []);
-
+  // User login removed: pure open workspace with persistent operational session
   const value = useMemo(() => ({
-    currentUser,
-    authToken,
-    isAuthenticated: Boolean(currentUser && authToken),
-    login,
-    logout,
-    register
-  }), [currentUser, authToken, login, logout, register]);
+    currentUser: null,
+    authToken: 'active_soc_session',
+    isAuthenticated: true,
+    login: async () => ({ status: 'authenticated' }),
+    logout: () => {},
+    register: async () => ({})
+  }), []);
 
   return (
     <AuthContext.Provider value={value}>

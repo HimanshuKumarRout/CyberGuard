@@ -1,11 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
-import { useAuth } from './AuthContext';
 
 const SocDataContext = createContext(null);
 
 export function SocDataProvider({ children }) {
-  const { isAuthenticated } = useAuth();
   const [stats, setStats] = useState({
     total_events: 0,
     threats_detected: 0,
@@ -41,10 +39,11 @@ export function SocDataProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      refreshData();
-    }
-  }, [isAuthenticated, refreshData]);
+    refreshData();
+    // Periodic background telemetry refresh every 10 seconds
+    const interval = setInterval(refreshData, 10000);
+    return () => clearInterval(interval);
+  }, [refreshData]);
 
   const handleAnalyzeThreat = useCallback(async (type, payload) => {
     setLoading(true);
